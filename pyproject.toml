@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "DroneManager"
+version = "0.4"
+authors = [
+    {name="Authors Anonymized", email="anon.5634287@gmail.de"}, ]
+description = "Package to connect to and control multiple drones, either programmatically or using a CLI."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy<2",
+    "textual==2.1.2",
+    "rich",
+    "mavsdk==3.0.1",
+    "pymavlink",
+    "pygame",
+    "haversine",
+    "scipy",
+    "requests",
+    "ruckig",
+    "opencv-python"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent", ]
+
+[project.scripts]
+dm = "dronemanager.app:main"
+
+[project.optional-dependencies]
+docs = [
+    "sphinx",
+    "sphinx_rtd_theme"]
