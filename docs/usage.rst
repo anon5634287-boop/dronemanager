@@ -168,7 +168,8 @@ This is a showcase demo where three drones look for a POI and start continuously
 To run it, you will need three drones, preferably running PX4, a dummy object of interest and a 7 x 3 x 3 meter area 
 where you can fly multiple drones with high precision.
 We ran this demo in an indoor environment with an OptiTrack system for positioning. Each drone was configured to
-communicate on a separate port, see :ref:`common issues <connection_issues>`. The setup instructions for real drones below assume a similar setup.
+communicate on a separate port, see :ref:`common issues <connection_issues>`. The setup instructions for real drones
+below assume a similar setup.
 
 If you don't have an indoor flying set up ready to go, we suggest going outside and using GPS instead. The setup will 
 have to be modified to allow for positioning errors from GPS by increasing the flight area significantly, at least triple.
@@ -255,13 +256,14 @@ you tell the drone to return-to-base, it might very well try to land on your lap
 When working with real drones you should always test the actual behaviour in a safe environment before risking hardware
 (or lives!).
 
-.. _connection_issues:
+..
+  .. _connection_issues:
 
-Connection Issues
-^^^^^^^^^^^^^^^^^
+  Connection Issues
+  ^^^^^^^^^^^^^^^^^
 
-TODO: Ports, Mavlink awkwardness
-TODO: Firewalls
+  TODO: Ports, Mavlink awkwardness
+  TODO: Firewalls
 
 Coordinate Systems
 ^^^^^^^^^^^^^^^^^^
