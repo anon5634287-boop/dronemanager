@@ -7,6 +7,7 @@ import shlex
 from dronemanager.dronemanager import DroneManager
 from dronemanager.drone import Drone, DroneMAVSDK
 from dronemanager.utils import common_formatter, check_cli_command_signatures, coroutine_awaiter
+from dronemanager.navigation.rectlocalfence import RectLocalFence
 
 import textual.css.query
 from textual import on, events
@@ -208,7 +209,7 @@ class CommandScreen(Screen):
 
         param_parser = command_parsers.add_parser("params", help="Prints parameters for a drone", logger=self.logger)
         param_parser.add_argument("drone", type=str, help="Name of the drone")
-        param_parser.add_argument("--raw", action="store_true",
+        param_parser.add_argument("-r", "--raw", action="store_true",
                                   help="Print raw parameters instead. Very long!")
 
         arm_parser = command_parsers.add_parser("arm", help="Arm the named drone(s).", logger = self.logger)
@@ -467,7 +468,8 @@ class CommandScreen(Screen):
                 elif command == "mode":
                     tmp = asyncio.create_task(self.dm.change_flightmode(args.drones, args.mode))
                 elif command == "fence":
-                    self.dm.set_fence(args.drones, args.nl, args.nu, args.el, args.eu, args.dl, args.du, safety_level = args.safety)
+                    fence = RectLocalFence(args.nl, args.nu, args.el, args.eu, args.dl, args.du, safety_level=args.safety)
+                    self.dm.set_fence(args.drones, fence)
                 elif command == "flyto":
                     tmp = asyncio.create_task(self.dm.fly_to(args.drone, local=[args.x, args.y, args.z], yaw=args.yaw,
                                                              tol=args.tolerance, schedule=args.schedule))

@@ -18,19 +18,19 @@ the logic. The main class is :py:class:`DroneManager <dronemanager.dronemanager.
 all plugins and missions. This is the core component of the library, and should be the entry point for most use cases.
 
 The last component handles user interactions, i.e. the terminal interface. It consists of only the
-:py:mod:`App <dronemanager.app>` and :py:mod:`<dronecontrol.widgets>` modules.
+:py:mod:`App <dronemanager.app>` and :py:mod:`~dronemanager.widgets` modules.
 
 .. image:: imgs/implementationchart.svg
 
 We use the python built-in ``logging`` library for all the log handling. By default, this includes the log pane on the
 terminal interface and a series of files in the log directory. If you are not using the terminal interface, the argument
-```log_to_console`` can be used to print messages to console instead.
+``log_to_console`` can be used to print messages to console instead.
 
 .. note::
 
    This software makes extensive use of `asyncio library <https://docs.python.org/3/library/asyncio.html>`__. While
-   multi-threading is possible with it, it is not automatically so. Care must be taken to offload CPU-intensive tasks
-   to other threads or processes, or execution of the core tasks can be blocked.
+   multi-threading is possible with it, it is not automatically multithreaded. Care must be taken to offload
+   CPU-intensive tasks to other threads or processes, or execution of the core tasks can be blocked.
 
 
 Creating your own plugin
@@ -142,25 +142,70 @@ or closed::
                await self.dm.ecowitt.get_data()
                await asyncio.sleep(1)
 
-In this example, we regularly try to access the ``get_data`` function of the ecowitt sensor plugin. Since you're likely
-not connected to such a sensor, you will get error messages in the log pane instead.
-Like CLI commands, background functions must be coroutines, but note the different syntax with the parenthesis.
+In this example, we regularly try to access the :py:meth:`~dronemanager.sensors.ecowitt.EcoWittSensor.get_data` function
+of the ecowitt sensor plugin. Since you're likely not connected to such a sensor, you will get error messages in the
+log pane instead. Like CLI commands, background functions must be coroutines, but note the different syntax with the
+parenthesis.
 
 
 .. _guide_mission:
 
-Creating your own mission
--------------------------
+Creating custom missions
+------------------------
 
-TODO: Example process of making a mission, using existing as example
+Missions fundamentally work very similar to plugins, with a few key changes. They must be subclasses of the
+:py:class:`~dronemanager.plugins.mission.Mission` abstract base class, they go into a folder "missions" and they have a
+new attribute ``name``, which takes the role of the prefix used for plugins. Unlike with plugins, this is an instance
+attribute, allowing multiple instances of the same mission class.
+Loading a mission is done with ``mission-load <file> <name?>``, where <file> is the name of the file with the mission,
+similar to plugins. The name argument is optional, by default the name of the file is used. The mission plugin must be
+loaded first (done at startup by default). The custom name is used as the prefix for CLI commands, and as the attribute
+for access from DroneManager.
 
-
+Compared to plugins, there are 5 functions which missions must provide, as they used by other parts of the software.
+They also come with three suggested attributes: ``current_stage`` of type
+:py:class:`~dronemanager.plugins.mission.MissionStage`, for whatever state the mission is currently in, a
+``flight_area`` with type :py:class:`~dronemanager.plugins.mission.FlightArea` and ``drones``, an ordered dictionary of
+the drones participating in this mission. Usage of these attributes is completely optional, but if they are set, then
+information about them is sent out over the UDP plugin by default.
 
 
 Navigation function guide
 -------------------------
 
-TODO: Explanation of the navigation system and how the components interact
+For the most part, DroneManager acts as a communication manager, translating information from and commands to the drone
+via MAVLink.
+Movement commands have a more complicated flow with split path generation, with a path generator and a path follower.
+
+The py:meth:`~dronemanager.drone.DroneMAVSDK.flyto` function acts as the entry point, wherein the user or a script
+provide a final target position for the drone to fly to and rest at. This target position is sent to a
+:py:class:`~dronemanager.navigation.core.PathGenerator` which produces a series of way points from the current position
+of the drone to the destination. A :py:class:`~dronemanager.navigation.core.PathFollower` algorithm then queries these
+way points and determines the actual setpoints that will be sent to the flight controller on the drone.
+
+The purpose of splitting path control into two separate sections is to allow for path planning at different scales.
+In this concept, the path generator produces a long-term path, accounting for any known obstacles along the way, which
+the follower algorithm pursues while accounting for the actual motion of the drone or previously unknown or dynamic
+obstacles that may appear. The path follower is the component that determines the setpoints that will be sent to the
+drone.
+The two components also work on different time scales. The path is only generated once at
+the beginning of movement, allowing for path-finding algorithms that may take some time to find a valid path.
+The path follower on the other hand must provide setpoints multiple times per second.
+
+The interface requirements for the generator and follower algorithms are kept minimal, allowing a lot of flexibility in
+their usage. We provide a basic “pass-through” implementation for both, with the dummy generator,
+:py:class:`~dronemanager.navigation.directtargetgenerator.DirectTargetGenerator` continually producing the
+target position as the only waypoint, while the dummy follower,
+:py:class:`~dronemanager.navigation.directsetpointfollower.DirectSetpointFollower`, simply passes waypoints as setpoints
+directly to the drone.
+
+Specifically for PX4 Offboard mode, we also provide
+:py:class:`a follower <dronemanager.navigation.ruckigfollower.RuckigOfflineFollower>` based on the
+`Ruckig <https://ruckig.com/>`_ library, to ensure nice, constrained flight behaviour without overshooting when sending
+long distance waypoints.
+
+The current default implementations are :py:class:`~dronemanager.navigation.directtargetgenerator.DirectTargetGenerator`
+and the :py:class:`RuckigFollower <dronemanager.navigation.ruckigfollower.RuckigOfflineFollower>`.
 
 
 Writing documentation
@@ -171,7 +216,7 @@ which style of docstring stub is generated.
 Type hints go into the signature, not the docstring.
 
 For classes, everything goes into the class docstring, except the arguments
-for __init__, which go into the __init__ docstring.
+for ``__init__``, which go into the ``__init__`` docstring.
 
 Sphinx uses the class hierarchy to try and find a docstring when a class
 overrides a member of its parent class. This can lead to errors when the

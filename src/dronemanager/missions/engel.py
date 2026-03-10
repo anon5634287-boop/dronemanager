@@ -1,7 +1,10 @@
-""" Mission for ENGEL data collection
-Capture images and combine with weather and position info from drone, storing them
-Functions to retake the same position as in a previous image and take another image.
+""" Mission for ENGEL data collection.
+
+Capture images and combine with weather data and position information from the capturing drone, storing them.
+Also includes functions to retake the same position as in a previous image and capture another image, as well as
+assorted post-processing and meta-data handling.
 """
+
 import asyncio
 import math
 import pathlib
@@ -623,4 +626,5 @@ class ENGELDataMission(Mission):
             await asyncio.sleep(1/self._gimbal_frequency)
 
 def _roll_pitch_compensation(gimbal_yaw, drone_roll, drone_pitch):
-    return math.sin(gimbal_yaw)*drone_roll + math.cos(gimbal_yaw) * drone_pitch
+    return 0  # Seems like our gimbal might already correct for drone pitch and roll when the gimbal is in locked mode?
+    #return math.sin(gimbal_yaw)*drone_roll + math.cos(gimbal_yaw) * drone_pitch

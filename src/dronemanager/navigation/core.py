@@ -1,4 +1,6 @@
 import asyncio
+import logging
+
 import numpy as np
 from abc import ABC, abstractmethod
 from enum import Enum, auto
@@ -112,8 +114,8 @@ class Fence(ABC):
     """ Abstract base class for geo-fence type classes and methods.
 
     """
-    def __init__(self, logger, *args, **kwargs):
-        self.logger = logger
+    def __init__(self, *args, **kwargs):
+        self.logger = logging.getLogger("Manager.Fence")
         self.active = True
 
     @abstractmethod
@@ -252,8 +254,9 @@ class PathFollower(ABC):
     async def follow(self):
         """ Follows waypoints produced from a path generator by sending setpoints to the drone FC.
 
-        Requests a new waypoint from the TG when get_next_waypoint returns True. If the PG does not produce a waypoint,
-        holds position instead.
+        Requests a new waypoint from the PathGenerator when get_next_waypoint returns True. If the PG does not produce
+        a waypoint, holds position instead.
+
         :return:
         """
         # Use current position as dummy waypoint in case og bugs in get_next_waypoint function or similar
